@@ -1,0 +1,191 @@
+@{
+    ViewBag.Title = "Power BI Report Viewer";
+}
+
+<style>
+    .report-toolbar {
+        padding: 15px 0;
+    }
+    .report-toolbar label {
+        font-weight: 600;
+        margin-right: 5px;
+    }
+    .report-toolbar select,
+    .report-toolbar input {
+        margin-right: 20px;
+    }
+    #reportContainer {
+        width: 100%;
+        height: 700px;
+        border: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+        position: relative;
+    }
+    #spinner {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+    }
+    #spinner .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+    .report-wrapper {
+        position: relative;
+    }
+    #errorBanner {
+        display: none;
+    }
+    .control-group {
+        display: inline-block;
+        margin-right: 15px;
+        margin-bottom: 10px;
+    }
+    .param-section {
+        background: #f0f4f8;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .param-section h6 {
+        margin-bottom: 10px;
+        color: #495057;
+    }
+</style>
+
+<h2>Power BI Report Viewer</h2>
+
+<div id="errorBanner" class="alert alert-danger alert-dismissible" role="alert">
+    <span id="errorMessage"></span>
+    <button type="button" class="btn-close" onclick="$('#errorBanner').hide();" aria-label="Close"></button>
+</div>
+
+<div class="report-toolbar">
+    <div class="row">
+        <div class="col-auto control-group">
+            <label for="ddlReports">Report:</label>
+            <select id="ddlReports" class="form-select form-select-sm d-inline-block w-auto">
+                <option value="">-- Select Report --</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Dataset parameters + live report filters -->
+<div class="param-section" id="paramSection">
+
+    <!-- Row 1: Dataset parameters — require a full re-embed when changed -->
+    <h6>Dataset Parameters</h6>
+    <div class="row g-2 align-items-end mb-2">
+        <div class="col-auto">
+            <label for="paramUserId" class="form-label form-label-sm">UserId</label>
+            <input type="text" id="paramUserId" class="form-control form-control-sm" value="SystemUser" />
+        </div>
+        <div class="col-auto align-self-end">
+            <button id="btnApplyParams" class="btn btn-primary btn-sm" disabled>
+                Re-embed
+            </button>
+        </div>
+        <div class="col-auto align-self-end pb-1">
+            <div class="form-check form-check-inline">
+                <input type="checkbox" id="chkRefresh" class="form-check-input" />
+                <label for="chkRefresh" class="form-check-label form-label-sm">Refresh dataset (Import mode)</label>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-2" />
+
+    <!-- Row 2: Report filters — applied instantly via the Power BI JS filter API -->
+    <h6>
+        Report Filters
+        <small class="text-muted fw-normal ms-1">applied instantly — no re-embed needed</small>
+    </h6>
+    <div class="row g-2 align-items-end">
+        <div class="col-auto">
+            <label for="ddlPeriod" class="form-label form-label-sm">Period</label>
+            <select id="ddlPeriod" class="form-select form-select-sm" disabled>
+                <option value="2024.FY">2024.FY</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <label for="ddlRegion" class="form-label form-label-sm">Region</label>
+            <select id="ddlRegion" class="form-select form-select-sm" disabled>
+                <option value="All">All</option>
+            </select>
+        </div>
+        <div class="col-auto align-self-end pb-1">
+            <div class="form-check form-check-inline">
+                <input type="checkbox" id="chkConvertCurrency" class="form-check-input" disabled />
+                <label for="chkConvertCurrency" class="form-check-label form-label-sm">Convert Currency</label>
+            </div>
+        </div>
+    </div>
+    <small class="text-muted mt-1 d-block">
+        Period, Region, and Convert Currency are applied as report-level filters at embed time.
+        Selecting <strong>All</strong> for Region clears that filter entirely.
+        UserId is a dataset parameter &mdash; use <em>Re-embed</em> to apply it.
+    </small>
+
+</div>
+
+<div class="report-wrapper">
+    <div id="spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2 text-center text-muted">Loading report...</div>
+    </div>
+    <div id="reportContainer"></div>
+</div>
+
+@section scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/powerbi-client/2.23.1/powerbi.min.js"
+            integrity="sha512-MNDzPBsgP/dAmTMBkJrKO+j1JLUPVnV6T8eUXz8167bSFGhwFWEMIm2oBnbYpPCaKNXFaEhCGBY80wn455suw=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    <script src="~/Scripts/site.js"></script>
+    <script>
+        $(document).ready(function () {
+            // ---------------------------------------------------------------
+            // CONFIGURATION: Set your workspace and report GUIDs here or
+            // populate #ddlReports dynamically from server configuration.
+            // ---------------------------------------------------------------
+            var reportConfigs = [
+                // { name: "Sales Report", workspaceGuid: "YOUR-WORKSPACE-GUID", reportGuid: "YOUR-REPORT-GUID" }
+            ];
+
+            // Populate the report dropdown from config
+            $.each(reportConfigs, function (i, cfg) {
+                $('#ddlReports').append(
+                    $('<option>', { value: cfg.workspaceGuid + '|' + cfg.reportGuid, text: cfg.name })
+                );
+            });
+
+            // Load report when selection changes
+            $('#ddlReports').on('change', function () {
+                var val = $(this).val();
+                if (!val) {
+                    $('#btnApplyParams').prop('disabled', true);
+                    $('#ddlRegion, #ddlPeriod, #chkConvertCurrency').prop('disabled', true);
+                    return;
+                }
+                var parts = val.split('|');
+                PowerBIApp.loadReport(parts[0], parts[1]);
+                $('#btnApplyParams').prop('disabled', false);
+            });
+
+            // Re-embed with updated dataset M parameters (e.g. UserId change)
+            $('#btnApplyParams').on('click', function () {
+                var val = $('#ddlReports').val();
+                if (!val) return;
+                var parts = val.split('|');
+                PowerBIApp.loadReport(parts[0], parts[1], true);
+            });
+        });
+    </script>
+}
