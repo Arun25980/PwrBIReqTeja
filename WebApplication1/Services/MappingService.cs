@@ -29,7 +29,7 @@ namespace WebApplication1.Services
                         UIControl = "ddlRegion",
                         ReportTable = "DimRegion",
                         ReportColumn = "RegionName",
-                        DatasetParam = "RegionParam",
+                        DatasetParam = "UnitSegment",
                         StoredProcParam = "@Region",
                         AllowedValues = new[] { "North", "South", "East", "West", "Central", "All" }
                     }
@@ -40,7 +40,7 @@ namespace WebApplication1.Services
                         UIControl = "ddlPeriod",
                         ReportTable = "FactDate",
                         ReportColumn = "ReportingPeriod",
-                        DatasetParam = "PeriodParam",
+                        DatasetParam = "ReportingPeriod",
                         StoredProcParam = "@ReportingPeriod",
                         AllowedValues = new[]
                         {
