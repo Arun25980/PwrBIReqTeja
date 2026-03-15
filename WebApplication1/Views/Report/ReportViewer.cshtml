@@ -100,10 +100,10 @@
 
     <hr class="my-2" />
 
-    <!-- Row 2: Report filters — applied instantly via the Power BI JS filter API -->
+    <!-- Row 2: Report parameters — require a re-embed when changed -->
     <h6>
-        Report Filters
-        <small class="text-muted fw-normal ms-1">applied instantly — no re-embed needed</small>
+        Report Parameters
+        <small class="text-muted fw-normal ms-1">applied as parameterValues — re-embed triggered automatically on change</small>
     </h6>
     <div class="row g-2 align-items-end">
         <div class="col-auto">
@@ -126,8 +126,7 @@
         </div>
     </div>
     <small class="text-muted mt-1 d-block">
-        Period, Region, and Convert Currency are applied as report-level filters at embed time.
-        Selecting <strong>All</strong> for Region clears that filter entirely.
+        Period, Region, and Convert Currency are passed as <strong>parameterValues</strong> at embed time and trigger an automatic re-embed when changed.
         UserId is a dataset parameter &mdash; use <em>Re-embed</em> to apply it.
     </small>
 

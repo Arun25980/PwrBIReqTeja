@@ -82,10 +82,9 @@ namespace WebApplication1.Controllers
                 var embedData = await _powerBiService.GetEmbedDataAsync(
                     workspaceId, reportId, datasetParams, request.RefreshDataset, ct);
 
-                // Return report-level filters for embed-time application via JS SDK
-                // (the correct mechanism for reports whose slicers drive stored-proc params)
-                embedData.InitialFilters = BuildInitialFilters();
-                embedData.InitialParameters = datasetParams;
+                // Return parameterValues for embed-time application via JS SDK.
+                // Always provide defaults so the client can build parameterValues even on first load.
+                embedData.InitialParameters = datasetParams ?? BuildInitialParameters();
 
                 return Ok(embedData);
             }
@@ -228,12 +227,12 @@ namespace WebApplication1.Controllers
                 },
                 new EmbedParameter
                 {
-                    Name = "DefaultPeriod",
+                    Name = "ReportingPeriod",
                     Value = ConfigurationManager.AppSettings["PowerBi:DefaultPeriod"] ?? "2024.FY"
                 },
                 new EmbedParameter
                 {
-                    Name = "DefaultRegion",
+                    Name = "UnitSegment",
                     Value = ConfigurationManager.AppSettings["PowerBi:DefaultRegion"] ?? "All"
                 },
                 new EmbedParameter
