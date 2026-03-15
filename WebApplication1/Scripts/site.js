@@ -135,11 +135,8 @@ var PowerBIApp = (function ($) {
             permissions: models.Permissions.All,
             parameterValues: paramValues,
             settings: {
-                panes: {
-                    filters: { expanded: false, visible: true },
-                    pageNavigation: { visible: true }
-                },
-                background: models.BackgroundType.Transparent
+                filterPaneEnabled: true,
+                navContentPaneEnabled: true
             }
         };
 

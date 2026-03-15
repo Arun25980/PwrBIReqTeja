@@ -360,4 +360,7 @@ MigrationBackup/
 .ionide/
 
 # Fody - auto-generated XML schema
-FodyWeavers.xsd.nuget/
+FodyWeavers.xsd
+
+# NuGet restore folder
+.nuget/
